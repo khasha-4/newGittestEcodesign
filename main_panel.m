@@ -23,16 +23,41 @@
 
 %% prelims
 clear all
+clc
+close all
 addpath('.') %path to material database [you could pick a different material database]
 
-%% load material database
-materialsData=readtable('materialData.xlsx','ReadRowNames',true);
-materialsData=addvars(materialsData,materialsData.Row,'NewVariableName','info');
+%% Setup the Import Options and import the data
+opts = spreadsheetImportOptions("NumVariables", 14);
+
+% Specify sheet and range
+opts.Sheet = "Sheet1";
+opts.DataRange = "A3:N11";
+
+% Specify column names and types
+opts.VariableNames = ["VarName1", "price", "density", "youngsModulus", "poissonsRatio", "yieldStrength", "tensileStrength", "productionEnergy", "productionCO2", "disposalEnergy", "disposalCO2", "eolEnergy", "eolCO2","info"];
+opts.VariableTypes = ["char", "double", "double", "double", "double", "double", "double", "double", "double", "double", "double", "double", "double","char"];
+
+% Specify variable properties
+opts = setvaropts(opts, "VarName1", "WhitespaceRule", "preserve");
+opts = setvaropts(opts, "VarName1", "EmptyFieldRule", "auto");
+
+% Import the data
+% materialsData=readtable('materialData.xlsx','ReadRowNames',true);
+% materialsData=addvars(materialsData,materialsData.Row,'NewVariableName','info');
+% materialsData=table2struct(materialsData);
+
+
+% Import the data
+materialsData=readtable('materialData.xlsx',opts, "UseExcel", false);
 materialsData=table2struct(materialsData);
+
+%% Clear temporary variables
+clear opts
   
 %% iterate material alternatives
 i=0;
-for m=[1 4]
+for m=[2 4]
   i=i+1;
   
   %% initiate model of the panel
@@ -40,7 +65,7 @@ for m=[1 4]
   
   %% select a material
   model=setModelMaterial(model,materialsData(m));
-  names(i)={materialsData(m).info};
+  names(i)={materialsData(m).VarName1};
   
   %% determine height to fit constraint and the resulting mass
   model=computeOptimalVariable(model);
